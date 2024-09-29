@@ -15,9 +15,9 @@ validation_dir = os.path.join(base_dir, "validation")
 test_dir = os.path.join(base_dir, "test")
 
 # Define split sizes
-train_split = 0.9
-validation_split = 0.05
-test_split = 0.05
+train_split = 0.8
+validation_split = 0.1
+test_split = 0.1
 
 # Create output directories if they don't exist
 for directory in [train_dir, validation_dir, test_dir]:
