@@ -30,7 +30,11 @@ numberOfNeurons = [16, 32, 64, 96, 112, 128, 144, 160, 176, 192, 256, 512]  # Te
 
 print(convolutionLayers[-1])
 
+<<<<<<< HEAD
 print(random.random() * numberOfFilters[-1])  # bu doğru değil çünkü aralıklar çok büyük. 16-32 küçük, 256-512 çok büyük (eşit olması lazım)
+=======
+print(random.random() * numberOfFilters[-1])  # bu doğru değil çünkü aralıklar çok büyük.
+>>>>>>> 91dc458e92b88070999ad4a5c3843509fdc7839c
 print(numberOfFilters[round(random.random() * (len(numberOfFilters) - 1))])  # bu doğru, değişkende int değeri tutmayacaksın unutma! kesirli değeri tutacaksın ki değer değişebilsin. yoksa değişim oranı en az 1 olmalı ki parametre değişimi olsun.
 
 values = [5, 18, 32, 48, 10, 25, 60, 48, 0.0005]
