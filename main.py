@@ -20,7 +20,7 @@ blockLayers = [0, 1, 2, 3, 4]
 blockDepth = [2, 3]  # Tekrarlanan
 """
 
-import random
+from random import random
 
 convolutionLayers = [3, 4, 5, 6, 7, 8, 9]
 numberOfFilters = [16, 32, 48, 64, 96, 128, 144, 160, 176, 192, 256]  # Tekrarlanan
@@ -30,8 +30,38 @@ numberOfNeurons = [16, 32, 64, 96, 112, 128, 144, 160, 176, 192, 256, 512]  # Te
 
 print(convolutionLayers[-1])
 
-print(random.random() * numberOfFilters[-1])  # bu doğru değil çünkü aralıklar çok büyük. 16-32 küçük, 256-512 çok büyük (eşit olması lazım)
-print(numberOfFilters[round(random.random() * (len(numberOfFilters) - 1))])  # bu doğru, değişkende int değeri tutmayacaksın unutma! kesirli değeri tutacaksın ki değer değişebilsin. yoksa değişim oranı en az 1 olmalı ki parametre değişimi olsun.
+print(random() * numberOfFilters[-1])  # bu doğru değil çünkü aralıklar çok büyük. 16-32 küçük, 256-512 çok büyük (eşit olması lazım)
+print(numberOfFilters[round(random() * (len(numberOfFilters) - 1))])  # bu doğru, değişkende int değeri tutmayacaksın unutma! kesirli değeri tutacaksın ki değer değişebilsin. yoksa değişim oranı en az 1 olmalı ki parametre değişimi olsun.
+
+maxConvolutionLayer = convolutionLayers[-1]
+maxDenseLayer = denseLayers[-1]
+
+
+class Agent:
+    def __init__(self, conv: int, dense: int) -> None:
+        self.convolutionLayer = conv
+        self.denseLayer = dense
+        self.convolutionLayerFilters = []
+        self.denseLayerNeurons = []
+
+        for i in range(conv):
+            self.convolutionLayerFilters.append()
+
+        for i in range(dense):
+            self.denseLayerNeurons.append()
+
+
+class Thesis:
+    def __init__(self) -> None:
+        self.CONVOLUTION_LAYERS = [3, 4, 5, 6, 7, 8, 9]
+        self.NUMBER_OF_FILTERS = [16, 32, 48, 64, 96, 128, 144, 160, 176, 192, 256]  # Tekrarlanan
+        self.DENSE_LAYERS = [1, 2, 3, 4]
+        self.NUMBER_OF_NEURONS = [16, 32, 64, 96, 112, 128, 144, 160, 176, 192, 256, 512]  # Tekrarlanan
+
+    def createFirstAgents(self, number: int):
+        for i in range(number):
+            pass
+
 
 values = [5, 18, 32, 48, 10, 25, 60, 48, 0.0005]
 hyperparameterList = [convolutionLayers, numberOfFilters, denseLayers, numberOfNeurons]
