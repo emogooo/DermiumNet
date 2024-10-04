@@ -20,7 +20,7 @@ blockLayers = [0, 1, 2, 3, 4]
 blockDepth = [2, 3]  # Tekrarlanan
 """
 
-from random import random
+from random import random, randint, choice
 
 convolutionLayers = [3, 4, 5, 6, 7, 8, 9]
 numberOfFilters = [16, 32, 48, 64, 96, 128, 144, 160, 176, 192, 256]  # Tekrarlanan
@@ -38,17 +38,14 @@ maxDenseLayer = denseLayers[-1]
 
 
 class Agent:
-    def __init__(self, conv: int, dense: int) -> None:
-        self.convolutionLayer = conv
-        self.denseLayer = dense
-        self.convolutionLayerFilters = []
-        self.denseLayerNeurons = []
+    def __init__(self, convolution: int, dense: int, filters: list, neurons: list) -> None:
+        self.convolution = convolution
+        self.dense = dense
+        self.filters = filters
+        self.neurons = neurons
 
-        for i in range(conv):
-            self.convolutionLayerFilters.append()
-
-        for i in range(dense):
-            self.denseLayerNeurons.append()
+    def __str__(self):
+        return f"Convolution Layer: {self.convolution}, Dense Layer: {self.dense}, Filters: {self.filters}, Neurons: {self.neurons}"
 
 
 class Thesis:
@@ -59,8 +56,27 @@ class Thesis:
         self.NUMBER_OF_NEURONS = [16, 32, 64, 96, 112, 128, 144, 160, 176, 192, 256, 512]  # Tekrarlanan
 
     def createFirstAgents(self, number: int):
-        for i in range(number):
-            pass
+        agentList = []
+        for _ in range(number):
+            conv = choice(self.CONVOLUTION_LAYERS)
+            dense = choice(self.DENSE_LAYERS)
+
+            filters = []
+            for _ in range(max(self.CONVOLUTION_LAYERS)):
+                filters.append(choice(self.NUMBER_OF_FILTERS))
+
+            neurons = []
+            for _ in range(max(self.DENSE_LAYERS)):
+                neurons.append(choice(self.NUMBER_OF_NEURONS))
+
+            agent = Agent(conv, dense, filters, neurons)
+            agentList.append(agent)
+
+        return agentList
+
+    def giveRandomSampleFrom(self, array: list):
+        idx = randint(0, len(array) - 1)
+        return array[idx]
 
 
 values = [5, 18, 32, 48, 10, 25, 60, 48, 0.0005]
@@ -86,3 +102,8 @@ def find_closest_hyperparameters(values, hyperparameter_list):
 
 
 print(find_closest_hyperparameters(values, hyperparameterList))
+
+th = Thesis()
+agents = th.createFirstAgents(5)
+for agent in agents:
+    print(agent)
