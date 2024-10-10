@@ -21,6 +21,15 @@ blockDepth = [2, 3]  # Tekrarlanan
 """
 
 from random import random, randint, choice
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, BatchNormalization, Dropout, GlobalAveragePooling2D
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
+from sklearn.metrics import confusion_matrix, accuracy_score
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 convolutionLayers = [3, 4, 5, 6, 7, 8, 9]
 numberOfFilters = [16, 32, 48, 64, 96, 128, 144, 160, 176, 192, 256]  # Tekrarlanan
@@ -45,7 +54,7 @@ class Agent:
     hiperparametre listesini üretir. Çünkü değişim oranı, bu sınırlar içerisinde kalabilir. Zaman içerisinde değişim istiyorsak önceki değişikliklerin kaydedilmesi şarttır. İşte bu yüzden getHyperparameterList isimli bir metodumuz mevcuttur.
     """
 
-    def __init__(self, convolution: int, dense: int, filters: list, neurons: list) -> None:
+    def __init__(self, convolution: float, dense: float, filters: list, neurons: list) -> None:
         self.convolution = convolution
         self.dense = dense
         self.filters = filters
@@ -55,9 +64,18 @@ class Agent:
         roundedFilters = [round(x, 2) for x in self.filters]
         roundedNeurons = [round(x, 2) for x in self.neurons]
         return f"Convolution Layer: {round(self.convolution, 2)}, Dense Layer: {round(self.dense, 2)}, Filters: {roundedFilters}, Neurons: {roundedNeurons}"
-    
-    def setHyperparameterList():
-        pass
+
+
+class HyperparameterList:
+    def __init__(self, convolution: int, dense: int, filters: list, neurons: list) -> None:
+        self.convolution = convolution
+        self.dense = dense
+        self.filters = filters
+        self.neurons = neurons
+
+    def __str__(self):
+        return f"Convolution Layer: {self.convolution}, Dense Layer: {self.dense}, Filters: {self.filters}, Neurons: {self.neurons}"
+
 
 class Thesis:
     def __init__(self) -> None:
@@ -66,7 +84,11 @@ class Thesis:
         self.DENSE_LAYERS = [1, 2, 3, 4]
         self.NUMBER_OF_NEURONS = [16, 32, 64, 96, 112, 128, 144, 160, 176, 192, 256, 512]  # Tekrarlanan
 
-    def createFirstAgents(self, number: int) -> list:
+        self.INPUT_SHAPE = (224, 224, 3)
+        self.BATCH_SIZE = 16
+        self.EPOCH = 200
+
+    def getFirstAgents(self, number: int) -> list:
         agentList = []
         for _ in range(number):
             conv = random() * (len(self.CONVOLUTION_LAYERS) - 1)
@@ -85,9 +107,9 @@ class Thesis:
 
         return agentList
 
-    def getHyperparameterList(self, reference: Agent) -> list:
+    def getHyperparameterList(self, reference: Agent) -> HyperparameterList:
         """
-        Index değerlerini tam sayıya yuvarlayıp dizinin ilişkili elemanını alır, tüm elemanları aldıktan sonra dizi halinde döner.        
+        Index değerlerini tam sayıya yuvarlayıp dizinin ilişkili elemanını alır, tüm elemanları aldıktan sonra dizi halinde döner.
         """
         conv = self.CONVOLUTION_LAYERS[round(reference.convolution)]
         dense = self.DENSE_LAYERS[round(reference.dense)]
@@ -97,22 +119,31 @@ class Thesis:
 
         neurons = []
         for i in range(len(reference.neurons)):
-            neurons.append(self.NUMBER_OF_NEURONS[round(reference.filters[i])])
+            neurons.append(self.NUMBER_OF_NEURONS[round(reference.neurons[i])])
 
-        return [conv, dense, filters, neurons]
+        return HyperparameterList(conv, dense, filters, neurons)
 
+    def getModel(self, hyperparameterList: HyperparameterList) -> Sequential:
+        model = Sequential()
+        for i in range(hyperparameterList.convolution):
+            model.add(Conv2D(filters=hyperparameterList.filters[i], kernel_size=(3, 3), activation="relu", padding="same", input_shape=self.INPUT_SHAPE))
+            model.add(BatchNormalization())
+            model.add(MaxPooling2D(pool_size=(2, 2)))
 
-values = [5, 18, 32, 48, 10, 25, 60, 48, 0.0005]
-hyperparameterList = [convolutionLayers, numberOfFilters, denseLayers, numberOfNeurons]
+        model.add(GlobalAveragePooling2D())
 
+        for i in range(hyperparameterList.dense):
+            model.add(Dense(units=hyperparameterList.neurons[i], activation="relu"))
+            model.add(Dropout(0.25))
 
+        model.add(Dense(units=5, activation="softmax"))
+        return model
 
-# print(find_closest_hyperparameters(values, hyperparameterList))
 
 th = Thesis()
-agents = th.createFirstAgents(5)
+agents = th.getFirstAgents(5)
 for agent in agents:
-    realValue = th.getHyperparameterList(agent)
-    print(realValue)
+    hlist = th.getHyperparameterList(agent)
+    model = th.getModel(hlist)
     print(agent)
-    print()
+    print(hlist)
