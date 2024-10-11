@@ -66,23 +66,12 @@ class Agent:
         return f"Convolution Layer: {round(self.convolution, 2)}, Dense Layer: {round(self.dense, 2)}, Filters: {roundedFilters}, Neurons: {roundedNeurons}"
 
 
-class HyperparameterList:
-    def __init__(self, convolution: int, dense: int, filters: list, neurons: list) -> None:
-        self.convolution = convolution
-        self.dense = dense
-        self.filters = filters
-        self.neurons = neurons
-
-    def __str__(self):
-        return f"Convolution Layer: {self.convolution}, Dense Layer: {self.dense}, Filters: {self.filters}, Neurons: {self.neurons}"
-
-
 class Thesis:
     def __init__(self) -> None:
         self.CONVOLUTION_LAYERS = [3, 4, 5, 6, 7, 8, 9]
-        self.NUMBER_OF_FILTERS = [16, 32, 48, 64, 96, 128, 144, 160, 176, 192, 256]  # Tekrarlanan
+        self.FILTERS = [16, 32, 48, 64, 96, 128, 144, 160, 176, 192, 256]  # Tekrarlanan
         self.DENSE_LAYERS = [1, 2, 3, 4]
-        self.NUMBER_OF_NEURONS = [16, 32, 64, 96, 112, 128, 144, 160, 176, 192, 256, 512]  # Tekrarlanan
+        self.NEURONS = [16, 32, 64, 96, 112, 128, 144, 160, 176, 192, 256, 512]  # Tekrarlanan
 
         self.INPUT_SHAPE = (224, 224, 3)
         self.BATCH_SIZE = 16
@@ -96,44 +85,47 @@ class Thesis:
 
             filters = []
             for _ in range(max(self.CONVOLUTION_LAYERS)):
-                filters.append(random() * (len(self.NUMBER_OF_FILTERS) - 1))
+                filters.append(random() * (len(self.FILTERS) - 1))
 
             neurons = []
             for _ in range(max(self.DENSE_LAYERS)):
-                neurons.append(random() * (len(self.NUMBER_OF_NEURONS) - 1))
+                neurons.append(random() * (len(self.NEURONS) - 1))
 
             agent = Agent(conv, dense, filters, neurons)
             agentList.append(agent)
 
         return agentList
 
-    def getHyperparameterList(self, reference: Agent) -> HyperparameterList:
+    def printHyperparameterList(self, agent: Agent) -> None:
         """
         Index değerlerini tam sayıya yuvarlayıp dizinin ilişkili elemanını alır, tüm elemanları aldıktan sonra dizi halinde döner.
         """
-        conv = self.CONVOLUTION_LAYERS[round(reference.convolution)]
-        dense = self.DENSE_LAYERS[round(reference.dense)]
+        conv = self.CONVOLUTION_LAYERS[round(agent.convolution)]
+        dense = self.DENSE_LAYERS[round(agent.dense)]
         filters = []
-        for i in range(len(reference.filters)):
-            filters.append(self.NUMBER_OF_FILTERS[round(reference.filters[i])])
+        for i in range(len(agent.filters)):
+            filters.append(self.FILTERS[round(agent.filters[i])])
 
         neurons = []
-        for i in range(len(reference.neurons)):
-            neurons.append(self.NUMBER_OF_NEURONS[round(reference.neurons[i])])
+        for i in range(len(agent.neurons)):
+            neurons.append(self.NEURONS[round(agent.neurons[i])])
 
-        return HyperparameterList(conv, dense, filters, neurons)
+        print(f"Convolution Layer: {conv}, Dense Layer: {dense}, Filters: {filters}, Neurons: {neurons}")
 
-    def getModel(self, hyperparameterList: HyperparameterList) -> Sequential:
+    def getModel(self, agent: Agent) -> Sequential:
         model = Sequential()
-        for i in range(hyperparameterList.convolution):
-            model.add(Conv2D(filters=hyperparameterList.filters[i], kernel_size=(3, 3), activation="relu", padding="same", input_shape=self.INPUT_SHAPE))
+        for i in range(self.CONVOLUTION_LAYERS[round(agent.convolution)]):
+            if i == 0:
+                model.add(Conv2D(filters=self.FILTERS[round(agent.filters[i])], kernel_size=(3, 3), activation="relu", padding="same"))
+            else:
+                model.add(Conv2D(filters=self.FILTERS[round(agent.filters[i])], kernel_size=(3, 3), activation="relu"))
             model.add(BatchNormalization())
             model.add(MaxPooling2D(pool_size=(2, 2)))
 
         model.add(GlobalAveragePooling2D())
 
-        for i in range(hyperparameterList.dense):
-            model.add(Dense(units=hyperparameterList.neurons[i], activation="relu"))
+        for i in range(self.DENSE_LAYERS[round(agent.dense)]):
+            model.add(Dense(units=self.NEURONS[round(agent.neurons[i])], activation="relu"))
             model.add(Dropout(0.25))
 
         model.add(Dense(units=5, activation="softmax"))
@@ -143,7 +135,7 @@ class Thesis:
 th = Thesis()
 agents = th.getFirstAgents(5)
 for agent in agents:
-    hlist = th.getHyperparameterList(agent)
-    model = th.getModel(hlist)
+    model = th.getModel(agent)
+    th.printHyperparameterList(agent)
     print(agent)
-    print(hlist)
+    print()
