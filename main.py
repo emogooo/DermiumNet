@@ -76,6 +76,7 @@ class Thesis:
         self.INPUT_SHAPE = (224, 224, 3)
         self.BATCH_SIZE = 16
         self.EPOCH = 200
+        self.ITERATION = 100
 
     def getFirstAgents(self, number: int) -> list:
         agentList = []
@@ -97,9 +98,6 @@ class Thesis:
         return agentList
 
     def printHyperparameterList(self, agent: Agent) -> None:
-        """
-        Index değerlerini tam sayıya yuvarlayıp dizinin ilişkili elemanını alır, tüm elemanları aldıktan sonra dizi halinde döner.
-        """
         conv = self.CONVOLUTION_LAYERS[round(agent.convolution)]
         dense = self.DENSE_LAYERS[round(agent.dense)]
         filters = []
@@ -130,6 +128,35 @@ class Thesis:
 
         model.add(Dense(units=5, activation="softmax"))
         return model
+
+    def getModelResult(self, model: Sequential):
+        pass
+
+    def equilibriumOptimizer(self):
+        numberOfAgents = 5
+        agents = self.getFirstAgents(numberOfAgents)
+        bestAgent = agents[0]
+        bestFitness = float("inf")
+
+        for iter in range(self.ITERATION):
+            for agent in range(agents):
+                model = self.getModel(agent)
+                result = self.getModelResult(model)
+                if result < bestFitness:
+                    bestFitness = result
+                    bestAgent = agent
+
+            for i in range(numberOfAgents):
+                agent = agents[i]
+                a = 2 * (1 - iter / self.max_iter)
+                r1 = np.random.rand()
+                r2 = np.random.rand()
+                g = np.random.rand()
+
+                if g < 0.5:
+                    agent = agent + a * r1 * (bestAgent - r2 * agent)
+                else:
+                    agent = agent - a * r1 * (bestAgent - r2 * agent)
 
 
 th = Thesis()
