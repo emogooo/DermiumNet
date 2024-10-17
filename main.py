@@ -67,7 +67,7 @@ class Agent:
 
 
 class Thesis:
-    def __init__(self) -> None:
+    def __init__(self, directory: str) -> None:
         self.CONVOLUTION_LAYERS = [3, 4, 5, 6, 7, 8, 9]
         self.FILTERS = [16, 32, 48, 64, 96, 128, 144, 160, 176, 192, 256]  # Tekrarlanan
         self.DENSE_LAYERS = [1, 2, 3, 4]
@@ -77,6 +77,17 @@ class Thesis:
         self.BATCH_SIZE = 16
         self.EPOCH = 200
         self.ITERATION = 100
+
+        self.directory = directory
+
+        trainDatagen = ImageDataGenerator(rescale=1.0 / 255, rotation_range=40, width_shift_range=0.2, height_shift_range=0.2, shear_range=0.2, zoom_range=0.2, horizontal_flip=True, fill_mode="nearest")
+        testDatagen = ImageDataGenerator(rescale=1.0 / 255)
+
+        datasetDirectory = directory + "/datasets/flowersTestAugmentSplit/"
+
+        self.trainingSet = trainDatagen.flow_from_directory(datasetDirectory + "train", batch_size=self.BATCH_SIZE, class_mode="categorical")
+        self.validationSet = testDatagen.flow_from_directory(datasetDirectory + "validation", batch_size=self.BATCH_SIZE, class_mode="categorical")
+        self.testSet = testDatagen.flow_from_directory(datasetDirectory + "test", batch_size=1, class_mode="categorical", shuffle=False)
 
     def getFirstAgents(self, number: int) -> list:
         agentList = []
@@ -130,7 +141,17 @@ class Thesis:
         return model
 
     def getModelResult(self, model: Sequential):
-        pass
+        model.compile(optimizer=Adam(learning_rate=0.001), loss="categorical_crossentropy", metrics=["accuracy"])
+        reduceLearningRate = ReduceLROnPlateau(monitor="val_loss", factor=0.1, patience=10, min_lr=1e-4, verbose=1)
+        checkpoint = ModelCheckpoint(filepath="model_checkpoint.h5", monitor="val_loss", save_best_only=True, verbose=1)
+        history = model.fit(self.trainingSet, steps_per_epoch=self.trainingSet.samples // self.BATCH_SIZE, epochs=self.EPOCH, validation_data=self.validationSet, validation_steps=self.validationSet.n // self.validationSet.batch_size, callbacks=[reduceLearningRate, checkpoint])
+        self.testSet.reset()
+        predictions = model.predict(self.testSet, steps=self.testSet.samples // self.testSet.batch_size)
+        predicted_classes = np.argmax(predictions, axis=1)
+        true_classes = self.testSet.classes
+        class_labels = list(self.testSet.class_indices.keys())
+        conf_matrix = confusion_matrix(true_classes, predicted_classes)
+        accuracy = accuracy_score(true_classes, predicted_classes)
 
     def equilibriumOptimizer(self):
         numberOfAgents = 5
@@ -148,10 +169,10 @@ class Thesis:
 
             for i in range(numberOfAgents):
                 agent = agents[i]
-                a = 2 * (1 - iter / self.max_iter)
-                r1 = np.random.rand()
-                r2 = np.random.rand()
-                g = np.random.rand()
+                a = 2 * (1 - iter / self.ITERATION)
+                r1 = random()
+                r2 = random()
+                g = random()
 
                 if g < 0.5:
                     agent = agent + a * r1 * (bestAgent - r2 * agent)
@@ -159,7 +180,7 @@ class Thesis:
                     agent = agent - a * r1 * (bestAgent - r2 * agent)
 
 
-th = Thesis()
+th = Thesis("D:/Github/DermiumNet")
 agents = th.getFirstAgents(5)
 for agent in agents:
     model = th.getModel(agent)
