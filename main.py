@@ -66,7 +66,52 @@ class Agent:
         return f"Convolution Layer: {round(self.convolution, 2)}, Dense Layer: {round(self.dense, 2)}, Filters: {roundedFilters}, Neurons: {roundedNeurons}"
 
 
+class ModelResult:
+    __ModelCounter = 0
+
+    def __init__(self, history, predictions, trueClasses, classLabels) -> None:
+        self.__HISTORY = history
+        self.__PRETICTED_CLASSES = np.argmax(predictions, axis=1)
+        self.__TRUE_CLASSES = trueClasses
+        self.__CLASS_LABELS = classLabels
+        ModelResult.__ModelCounter += 1
+        self.__MODEL_NUMBER = ModelResult.__ModelCounter
+
+    def __getConfusionMatrix(self):
+        return confusion_matrix(self.__TRUE_CLASSES, self.__PRETICTED_CLASSES)
+
+    def getAccuracyScore(self, fp: int) -> float:
+        return round(accuracy_score(self.__TRUE_CLASSES, self.__PRETICTED_CLASSES), fp)
+
+    def saveConfusionMatrixChart(self, directory: str):
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(self.__getConfusionMatrix(), annot=True, fmt="d", cmap="Blues", xticklabels=self.__CLASS_LABELS, yticklabels=self.__CLASS_LABELS)
+        plt.xlabel("Predicted")
+        plt.ylabel("True")
+        plt.title(f"Confusion Matrix\nModel: {self.__MODEL_NUMBER}\nTotal Accuracy: {self.getAccuracyScore(2)}")
+        plt.savefig(f"{directory}/results/confusion_matrixes/model_{self.__MODEL_NUMBER}_acc_{self.getAccuracyScore(0)}")
+
+    def saveLossChart(self, directory: str):
+        _, ax = plt.subplots()
+        ax.set_xlabel("Epoch", loc="right")
+        plt.title(f"Loss - Validation Loss\nModel: {self.__MODEL_NUMBER}")
+        plt.plot(self.__HISTORY.history["loss"], "green", label="Loss")
+        plt.plot(self.__HISTORY.history["val_loss"], "purple", label="Validation Loss")
+        plt.legend()
+        plt.savefig(f"{directory}/results/loss/model_{self.__MODEL_NUMBER}")
+
+    def saveAccuracyChart(self, directory: str):
+        _, ax = plt.subplots()
+        ax.set_xlabel("Epoch", loc="right")
+        plt.title(f"Accuracy - Validation Accuracy\nModel: {self.__MODEL_NUMBER}")
+        plt.plot(self.__HISTORY.history["accuracy"], "red", label="Accuracy")
+        plt.plot(self.__HISTORY.history["val_accuracy"], "blue", label="Validation Accuracy")
+        plt.legend()
+        plt.savefig(f"{directory}/results/accuracy/model_{self.__MODEL_NUMBER}")
+
+
 class Thesis:
+
     def __init__(self, directory: str) -> None:
         self.CONVOLUTION_LAYERS = [3, 4, 5, 6, 7, 8, 9]
         self.FILTERS = [16, 32, 48, 64, 96, 128, 144, 160, 176, 192, 256]  # Tekrarlanan
@@ -88,6 +133,9 @@ class Thesis:
         self.trainingSet = trainDatagen.flow_from_directory(datasetDirectory + "train", batch_size=self.BATCH_SIZE, class_mode="categorical")
         self.validationSet = testDatagen.flow_from_directory(datasetDirectory + "validation", batch_size=self.BATCH_SIZE, class_mode="categorical")
         self.testSet = testDatagen.flow_from_directory(datasetDirectory + "test", batch_size=1, class_mode="categorical", shuffle=False)
+
+        self.CLASS_LABELS = list(self.testSet.class_indices.keys())
+        self.TRUE_CLASSES = self.testSet.classes
 
     def getFirstAgents(self, number: int) -> list:
         agentList = []
@@ -140,18 +188,14 @@ class Thesis:
         model.add(Dense(units=5, activation="softmax"))
         return model
 
-    def getModelResult(self, model: Sequential):
+    def getModelResult(self, model: Sequential) -> ModelResult:
         model.compile(optimizer=Adam(learning_rate=0.001), loss="categorical_crossentropy", metrics=["accuracy"])
         reduceLearningRate = ReduceLROnPlateau(monitor="val_loss", factor=0.1, patience=10, min_lr=1e-4, verbose=1)
         checkpoint = ModelCheckpoint(filepath="model_checkpoint.h5", monitor="val_loss", save_best_only=True, verbose=1)
         history = model.fit(self.trainingSet, steps_per_epoch=self.trainingSet.samples // self.BATCH_SIZE, epochs=self.EPOCH, validation_data=self.validationSet, validation_steps=self.validationSet.n // self.validationSet.batch_size, callbacks=[reduceLearningRate, checkpoint])
-        self.testSet.reset()
         predictions = model.predict(self.testSet, steps=self.testSet.samples // self.testSet.batch_size)
-        predicted_classes = np.argmax(predictions, axis=1)
-        true_classes = self.testSet.classes
-        class_labels = list(self.testSet.class_indices.keys())
-        conf_matrix = confusion_matrix(true_classes, predicted_classes)
-        accuracy = accuracy_score(true_classes, predicted_classes)
+        result = ModelResult(history, predictions, self.TRUE_CLASSES, self.CLASS_LABELS)
+        return result
 
     def equilibriumOptimizer(self):
         numberOfAgents = 5
@@ -160,15 +204,19 @@ class Thesis:
         bestFitness = float("inf")
 
         for iter in range(self.ITERATION):
-            for agent in range(agents):
+
+            for agent in agents:
                 model = self.getModel(agent)
                 result = self.getModelResult(model)
-                if result < bestFitness:
-                    bestFitness = result
+                if result.getAccuracyScore(3) < bestFitness:
+                    bestFitness = result.getAccuracyScore(3)
                     bestAgent = agent
+                    result.saveConfusionMatrixChart(self.directory)
+                    result.saveAccuracyChart(self.directory)
+                    result.saveLossChart(self.directory)
+                    print(f"Daha iyi bir model bulundu. Doğruluk oranı : {bestFitness}, iterasyon = {iter}")
 
-            for i in range(numberOfAgents):
-                agent = agents[i]
+            for agent in agents:
                 a = 2 * (1 - iter / self.ITERATION)
                 r1 = random()
                 r2 = random()
@@ -181,9 +229,5 @@ class Thesis:
 
 
 th = Thesis("D:/Github/DermiumNet")
-agents = th.getFirstAgents(5)
-for agent in agents:
-    model = th.getModel(agent)
-    th.printHyperparameterList(agent)
-    print(agent)
-    print()
+th.equilibriumOptimizer()
+
