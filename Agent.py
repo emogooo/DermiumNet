@@ -64,6 +64,9 @@ class Agent:
         roundedNeurons = [round(x, 2) for x in self.neuronsIndexReferences]
         return f"Agent Number: {self.number}, Convolution Layer: {round(self.convolutionIndexReferences, 2)}, Dense Layer: {round(self.denseIndexReferences, 2)}, Filters: {roundedFilters}, Neurons: {roundedNeurons}"
 
+    def getAgentParameters(self) -> list:
+        return [self.number, self.convolutionIndexReferences, self.denseIndexReferences, self.filtersIndexReferences, self.neuronsIndexReferences]
+
 
 def getFirstAgents(number: int) -> list[Agent]:
     agentList = []

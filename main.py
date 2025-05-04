@@ -1,25 +1,79 @@
 from random import random
 from datetime import datetime
+from time import sleep
 import matplotlib.pyplot as plt
-from Agent import Agent, getFirstAgents
+from Agent import *
 import CNN
 import visualkeras
 import io
+import json
 
-ITERATION = 100
-
-
-def logAgent(iter: int, agent: Agent):
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open("results/Hyperparameter-Log.txt", "a") as file:
-        file.write(f"{current_time} - iter: {iter} - {agent}\n")
+iteration = 0
+sleepTime = 0
+startIndex = 0
+aMultiplierEO = 0
 
 
-def logMessage(msg: str):
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(current_time + " - " + msg)
-    with open("results/System-Log.txt", "a") as file:
-        file.write(f"{current_time} - {msg}\n")
+def log(msg, path: str, mode: str, date: bool):
+    if date:
+        current_time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        print(current_time + " - " + msg)
+        with open(path, mode) as file:
+            file.write(f"{current_time} - {msg}")
+    else:
+        print(msg)
+        with open(path, mode) as file:
+            file.write(msg)
+
+
+def readConfig(file_name="runtime-parameters.txt") -> dict:
+    params = {}
+    try:
+        with open(file_name, "r") as file:
+            for line in file:
+                # Her satırı key: value şeklinde ayırma
+                if line.strip():  # Boş satırları atla
+                    key, value = line.strip().split(":")
+                    params[key.strip()] = int(value.strip())
+    except FileNotFoundError:
+        print(f"{file_name} dosyası bulunamadı.")
+    return params
+
+
+def setConfig():
+    global iteration, sleepTime, aMultiplierEO
+    try:
+        params = readConfig()
+        iteration = params["iteration"]
+        sleepTime = params["sleep"]
+        aMultiplierEO = params["aMultiplierEO"] / 100.0
+    except:
+        pass
+
+
+def readProgress(filename="progress.json"):
+    try:
+        with open(filename, "r") as file:
+            progress_data = json.load(file)
+            return progress_data
+    except FileNotFoundError:
+        print(f"{filename} dosyası bulunamadı, sıfırdan başlıyoruz.")
+        return None
+    except json.JSONDecodeError:
+        print(f"{filename} dosyasında hata var, sıfırdan başlıyoruz.")
+        return None
+
+
+def saveProgress(index, agents, globalBestAgent, globalBestFitness, localFitnessChart, globalFitnessChart, filename="progress.json"):
+    progress_data = {"index": index, "agents": agents, "globalBestAgent": globalBestAgent, "globalBestFitness": globalBestFitness, "localFitnessChart": localFitnessChart, "globalFitnessChart": globalFitnessChart}
+
+    # Veriyi JSON formatında kaydet
+    try:
+        with open(filename, "w") as file:
+            json.dump(progress_data, file)
+        print("İlerleme kaydedildi.")
+    except Exception as e:
+        print(f"İlerleme kaydedilirken hata oluştu: {e}")
 
 
 numberOfAgents = 5
@@ -31,16 +85,47 @@ localBestFitness = 0
 localFitnessChart = []
 globalFitnessChart = []
 
-for iter in range(ITERATION):
+setConfig()
 
-    logMessage(f"iter: {iter}")
+try:
+    progress = readProgress()
+    if progress != None:
+        startIndex = progress["index"]
+        GB_AgentParameters = progress["globalBestAgent"]
+        globalBestFitness = progress["globalBestFitness"]
+        localFitnessChart = progress["localFitnessChart"]
+        globalFitnessChart = progress["globalFitnessChart"]
+        agentsParameters = progress["agents"]
+        newAgentList = []
+        for ap in agentsParameters:
+            agent = Agent(ap[1], ap[2], ap[3], ap[4])
+            agent.number = ap[0]
+            newAgentList.append(agent)
+
+        globalBestAgent = Agent(GB_AgentParameters[1], GB_AgentParameters[2], GB_AgentParameters[3], GB_AgentParameters[4])
+        globalBestAgent.number = GB_AgentParameters[0]
+
+        Agent.counter = agentsParameters[0][0] + 4
+
+        agents = newAgentList
+        print("Veriler okundu kalınan yerden devam ediliyor.")
+
+except:
+    print("Veriler okunmaya çalışırken bir hata oluştu.")
+
+
+for iter in range(startIndex, iteration):
+
+    setConfig()
+
+    log(f"\n---------------------------- ITERASYON : {iter + 1} ----------------------------\n", "results/System-Log.txt", "a", True)
     localBestFitness = 0
     for agent in agents:
-        logAgent(iter, agent)
+        log(f"Iteration: {iter + 1} - {agent}\n", "results/Hyperparameter-Log.txt", "a", True)
         model = CNN.CNN.getModel(agent)
         result = CNN.CNN.getModelResult(agent.number, model)
         accuracy = result.getAccuracyScore(3)
-        logMessage(f"Agent Number: {agent.number}, accuracy: {accuracy}, " + agent.hyperparameters.getHyperparameters())
+        log(f"Agent Number: {agent.number}, accuracy: {accuracy}, {agent.hyperparameters.getHyperparameters()}\n", "results/System-Log.txt", "a", True)
 
         if accuracy > localBestFitness:
             localBestFitness = accuracy
@@ -52,15 +137,22 @@ for iter in range(ITERATION):
             result.saveConfusionMatrixChart()
             result.saveAccuracyChart()
             result.saveLossChart()
-            logMessage(f"Daha iyi bir model bulundu. Doğruluk oranı : {globalBestFitness}, model no: {globalBestAgent.number}")
+            log(f"Daha iyi bir agent bulundu. Accuracy oranı : {globalBestFitness}, agent no: {globalBestAgent.number}\n", "results/System-Log.txt", "a", True)
 
-    logMessage(f"{iter}. setin en iyi agent'ının fitness değeri: {localBestFitness}, en iyi agent no: {localBestAgent.number}")
+        sleep(sleepTime)
+
+    log(f"Iteration End: {iter+1}\n", "results/Hyperparameter-Log.txt", "a", True)
+    log(f"{iter+1}. setin en iyi accuracy değeri: {localBestFitness}, en iyi agent no: {localBestAgent.number}\n", "results/System-Log.txt", "a", True)
+    log(f"{round(localBestFitness, 3)},", "results/Local_Best_Fitness.txt", "a", False)
+    log(f"{round(globalBestFitness, 3)},", "results/Global_Best_Fitness.txt", "a", False)
     localFitnessChart.append(localBestFitness)
     globalFitnessChart.append(globalBestFitness)
+    log(f"Local best fitness array: {localFitnessChart}\n", "results/System-Log.txt", "a", True)
+    log(f"Global best fitness array: {globalFitnessChart}\n", "results/System-Log.txt", "a", True)
 
     newAgentList = []
     for i, agent in enumerate(agents):
-        a = 0.2 * (1 - iter / ITERATION)
+        a = aMultiplierEO * (1 - iter / iteration)
         r1 = random()
         r2 = random()
         g = random()
@@ -88,12 +180,15 @@ for iter in range(ITERATION):
         newAgentList.append(newAgent)
         roundedFilters = [round(x, 2) for x in newFilters]
         roundedNeurons = [round(x, 2) for x in newNeurons]
-        logMessage(f"Yeni hiperparametre değerleri (sınır bağımsız) oluşturuldu: Agent Number: {newAgent.number}, Convolution Layer: {round(newConv, 2)}, Dense Layer: {round(newDense, 2)}, Filters: {roundedFilters}, Neurons: {roundedNeurons}")
-        logMessage(f"Yeni agent oluşturuldu------------------------------------: {newAgent.getAgentValuesRounded()}")
+        log(f"Yeni hiperparametre değerleri (sınır bağımsız) oluşturuldu: Agent Number: {newAgent.number}, Convolution Layer: {round(newConv, 2)}, Dense Layer: {round(newDense, 2)}, Filters: {roundedFilters}, Neurons: {roundedNeurons}\n", "results/System-Log.txt", "a", True)
+        log(f"Yeni agent oluşturuldu------------------------------------: {newAgent.getAgentValuesRounded()}\n", "results/System-Log.txt", "a", True)
 
     agents = newAgentList
-    logMessage(f"Local best fitness log: {localFitnessChart}")
-    logMessage(f"Global best fitness log: {globalFitnessChart}")
+
+    agentParameterList = []
+    for agent in newAgentList:
+        agentParameterList.append(agent.getAgentParameters())
+    saveProgress(index=iter + 1, agents=agentParameterList, globalBestAgent=globalBestAgent.getAgentParameters(), globalBestFitness=globalBestFitness, localFitnessChart=localFitnessChart, globalFitnessChart=globalFitnessChart)
 
 iterations = list(range(1, len(localFitnessChart) + 1))
 

@@ -14,14 +14,14 @@ INPUT_SHAPE = (224, 224, 3)
 BATCH_SIZE = 16
 EPOCH = 100
 DIRECTORY = "D:/Github/DermiumNet"
-DATASET_DIRECTORY = DIRECTORY + "/datasets/flower/flowersTestAugmentSplit/"  # "/datasets/flowersTestAugmentSplit/"
+DATASET_DIRECTORY = DIRECTORY + "/datasets/flower/flowersTestAugmentSplit/" # "/datasets/flower/modelCrashDebugSet/"  # "/datasets/flower/flowersTestAugmentSplit/"
 OUTPUT_UNIT = 5
 
 trainDatagen = ImageDataGenerator(rescale=1.0 / 255, rotation_range=40, width_shift_range=0.2, height_shift_range=0.2, shear_range=0.2, zoom_range=0.2, horizontal_flip=True, fill_mode="nearest")
 testDatagen = ImageDataGenerator(rescale=1.0 / 255)
 
-trainingSet = trainDatagen.flow_from_directory(DATASET_DIRECTORY + "train", batch_size=BATCH_SIZE, class_mode="categorical")
-validationSet = testDatagen.flow_from_directory(DATASET_DIRECTORY + "validation", batch_size=BATCH_SIZE, class_mode="categorical")
+trainingSet = trainDatagen.flow_from_directory(DATASET_DIRECTORY + "train", batch_size=BATCH_SIZE, class_mode="categorical", shuffle=False)
+validationSet = testDatagen.flow_from_directory(DATASET_DIRECTORY + "validation", batch_size=BATCH_SIZE, class_mode="categorical", shuffle=False)
 testSet = testDatagen.flow_from_directory(DATASET_DIRECTORY + "test", batch_size=1, class_mode="categorical", shuffle=False)
 
 CLASS_LABELS = list(testSet.class_indices.keys())

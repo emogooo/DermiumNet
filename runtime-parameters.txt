@@ -1,0 +1,3 @@
+iteration:100
+sleep:30
+aMultiplierEO:200
