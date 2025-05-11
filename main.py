@@ -211,6 +211,7 @@ plt.legend()
 plt.savefig(f"{CNN.DIRECTORY}/results/global_fitness")
 
 model = CNN.CNN.getModel(globalBestAgent)
+model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 model.save(f"{CNN.DIRECTORY}/results/best_model.h5")
 
 # from tensorflow.keras.models import load_model
