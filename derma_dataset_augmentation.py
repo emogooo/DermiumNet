@@ -4,9 +4,9 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, i
 
 # Veri seti klasör yolları
 base_folder = r"D:/Github/DermiumNet/datasets/isic2019/sorted_images"
-augmented_base_folder = r"D:/Github/DermiumNet/datasets/isic2019/sorted_images_augmented"  # Ana klasör için yeni yol
+augmented_base_folder = r"D:/Github/DermiumNet/datasets/isic2019/sorted_images_augmented_2"  # Ana klasör için yeni yol
 diseases = ["AK", "BCC", "BKL", "DF", "MEL", "NV", "SCC", "VASC"]
-target_count = 2000  # En çok bulunan sınıfın (nv) görüntü sayısı
+target_count = 1000  # En çok bulunan sınıfın (nv) görüntü sayısı
 
 # Ana klasörü oluştur
 os.makedirs(augmented_base_folder, exist_ok=True)

@@ -9,14 +9,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 input_shape = (224, 224, 3)
-batch_size = 16
-epoch = 10
+batch_size = 24
+epoch = 200
 
 train_datagen = ImageDataGenerator(rescale=1.0 / 255, rotation_range=40, width_shift_range=0.2, height_shift_range=0.2, shear_range=0.2, zoom_range=0.2, horizontal_flip=True, fill_mode="nearest")
 test_datagen = ImageDataGenerator(rescale=1.0 / 255)
 
 main_directory = "D:/Github/DermiumNet/"
-dataset_directory = main_directory + "/datasets/flower/modelCrashDebugSet/"
+dataset_directory = main_directory + "datasets/flower/flowersTestAugmentSplit/"
 
 training_set = train_datagen.flow_from_directory(dataset_directory + "train", batch_size=batch_size, class_mode="categorical")
 validation_set = test_datagen.flow_from_directory(dataset_directory + "validation", batch_size=batch_size, class_mode="categorical")
@@ -24,45 +24,39 @@ test_set = test_datagen.flow_from_directory(dataset_directory + "test", batch_si
 
 model = Sequential()
 
-model.add(Conv2D(filters=128, kernel_size=(3, 3), activation="relu", padding="same", input_shape=input_shape))
+model.add(Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same", input_shape=input_shape))
 model.add(BatchNormalization())
-model.add(MaxPooling2D(pool_size=(2, 2)))
-
-model.add(Conv2D(filters=48, kernel_size=(3, 3), activation="relu", padding="same"))
-model.add(BatchNormalization())
-model.add(MaxPooling2D(pool_size=(2, 2), padding="same"))
-
-model.add(Conv2D(filters=128, kernel_size=(3, 3), activation="relu", padding="same"))
-model.add(BatchNormalization())
-model.add(MaxPooling2D(pool_size=(2, 2), padding="same"))
-
-model.add(Conv2D(filters=128, kernel_size=(3, 3), activation="relu", padding="same"))
-model.add(BatchNormalization())
-model.add(MaxPooling2D(pool_size=(2, 2), padding="same"))
-
 model.add(Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same"))
 model.add(BatchNormalization())
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
-model.add(Conv2D(filters=48, kernel_size=(3, 3), activation="relu"))
+model.add(Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same", input_shape=input_shape))
+model.add(BatchNormalization())
+model.add(Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same"))
 model.add(BatchNormalization())
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
-model.add(Conv2D(filters=128, kernel_size=(3, 3), activation="relu"))
+model.add(Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same", input_shape=input_shape))
+model.add(BatchNormalization())
+model.add(Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same"))
 model.add(BatchNormalization())
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
-model.add(Conv2D(filters=160, kernel_size=(3, 3), activation="relu"))
+model.add(Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same", input_shape=input_shape))
 model.add(BatchNormalization())
-
-model.add(Conv2D(filters=32, kernel_size=(3, 3), activation="relu"))
+model.add(Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same"))
 model.add(BatchNormalization())
+model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(GlobalAveragePooling2D())
 
-model.add(Dense(units=144, activation="relu"))
+model.add(Dense(units=512, activation="relu"))
 model.add(Dropout(0.25))
-model.add(Dense(units=32, activation="relu"))
+model.add(Dense(units=512, activation="relu"))
+model.add(Dropout(0.25))
+model.add(Dense(units=512, activation="relu"))
+model.add(Dropout(0.25))
+model.add(Dense(units=512, activation="relu"))
 model.add(Dropout(0.25))
 model.add(Dense(units=5, activation="softmax"))
 

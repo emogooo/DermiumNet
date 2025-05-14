@@ -11,10 +11,10 @@ import tensorflow as tf
 from Result import Result
 
 INPUT_SHAPE = (224, 224, 3)
-BATCH_SIZE = 16
+BATCH_SIZE = 24
 EPOCH = 200
 DIRECTORY = "D:/Github/DermiumNet"
-DATASET_DIRECTORY = DIRECTORY + "/datasets/isic2019/dataset/"  # "/datasets/flower/modelCrashDebugSet/"  # "/datasets/flower/flowersTestAugmentSplit/"
+DATASET_DIRECTORY = DIRECTORY + "/datasets/isic2019/dataset_2/"  # "/datasets/flower/modelCrashDebugSet/"  # "/datasets/flower/flowersTestAugmentSplit/"
 OUTPUT_UNIT = 8
 
 trainDatagen = ImageDataGenerator(rescale=1.0 / 255, rotation_range=40, width_shift_range=0.2, height_shift_range=0.2, shear_range=0.2, zoom_range=0.2, horizontal_flip=True, fill_mode="nearest")
@@ -22,7 +22,7 @@ testDatagen = ImageDataGenerator(rescale=1.0 / 255)
 
 trainingSet = trainDatagen.flow_from_directory(DATASET_DIRECTORY + "train", batch_size=BATCH_SIZE, class_mode="categorical")
 validationSet = testDatagen.flow_from_directory(DATASET_DIRECTORY + "validation", batch_size=BATCH_SIZE, class_mode="categorical")
-testSet = testDatagen.flow_from_directory(DATASET_DIRECTORY + "test", batch_size=10, class_mode="categorical", shuffle=False)
+testSet = testDatagen.flow_from_directory(DATASET_DIRECTORY + "test", batch_size=8, class_mode="categorical", shuffle=False)
 
 CLASS_LABELS = list(testSet.class_indices.keys())
 TRUE_CLASSES = testSet.classes
@@ -40,7 +40,12 @@ class CNN:
             model.add(BatchNormalization())
 
             if i % 2 == 1:
+                if agent.hyperparameters.convolution % 2 == 1 and i == agent.hyperparameters.convolution - 2:
+                    continue
                 model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        if agent.hyperparameters.convolution % 2 == 1:
+            model.add(MaxPooling2D(pool_size=(2, 2)))
 
         model.add(GlobalAveragePooling2D())
 

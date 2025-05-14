@@ -6,17 +6,17 @@ import random
 random.seed(97)
 
 # Define the dataset path
-dataset_dir = "datasets/isic2019/sorted_images_augmented"
+dataset_dir = "datasets/isic2019/sorted_images_augmented_2"
 
 # Define the output directories
-base_dir = "datasets/isic2019/dataset"
+base_dir = "datasets/isic2019/dataset_2"
 train_dir = os.path.join(base_dir, "train")
 validation_dir = os.path.join(base_dir, "validation")
 test_dir = os.path.join(base_dir, "test")
 
 # Define split sizes
-train_split = 0.8
-validation_split = 0.1
+train_split = 0.75
+validation_split = 0.15
 test_split = 0.1
 
 # Create output directories if they don't exist
